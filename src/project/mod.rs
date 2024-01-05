@@ -2,16 +2,19 @@ use chrono::NaiveDate;
 use egui::Ui;
 use serde::{Deserialize, Serialize};
 
+mod task;
+
 #[derive(Serialize, Deserialize)]
 #[serde(default)]
 pub struct Project {
     pub project_name: String,
     pub start_date: NaiveDate,
     pub end_date: NaiveDate,
+    // TODO: add a task vector for each project
 }
 
 impl Project {
-    pub fn new(start_date: NaiveDate, end_date: NaiveDate, project_name: String) -> Self {
+    fn new(start_date: NaiveDate, end_date: NaiveDate, project_name: String) -> Self {
         Self {
             project_name,
             start_date,
@@ -19,11 +22,14 @@ impl Project {
         }
     }
 
-    pub fn show(&self, ui: &mut Ui) {
+    pub fn show(&mut self, ui: &mut Ui) {
         ui.horizontal(|ui| {
             ui.heading(&self.project_name);
             ui.label(format!("{}", self.start_date));
             ui.label(format!("{}", self.end_date));
+
+            // TODO: add checkbox steps that a project can have
+
         });
     }
 
@@ -31,15 +37,33 @@ impl Project {
         start_date: NaiveDate,
         end_date: NaiveDate,
         project_name: String,
-    ) -> Option<Self> {
+    ) -> Result<Self, ProjectValidityError> {
         if start_date >= end_date {
-            return None;
+            return Err(ProjectValidityError::DateOrdinalityError);
         }
         if project_name.trim().is_empty() {
-            return None;
+            return Err(ProjectValidityError::ProjectNameError);
         }
 
-        Some(Self::new(start_date, end_date, project_name))
+        Ok(Self::new(start_date, end_date, project_name))
+    }
+}
+
+pub enum ProjectValidityError {
+    ProjectNameError,
+    DateOrdinalityError,
+}
+
+impl ProjectValidityError {
+    pub fn get_text(&self) -> String {
+        match self {
+            ProjectValidityError::ProjectNameError => {
+                "Project name needs to have text".to_string()
+            }
+            ProjectValidityError::DateOrdinalityError => {
+                "Project start date needs to proceed project end date".to_string()
+            }
+        }
     }
 }
 

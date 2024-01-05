@@ -43,7 +43,7 @@ impl Default for ProjectPlanner {
 impl eframe::App for ProjectPlanner {
     fn update(&mut self, ctx: &Context, _frame: &mut Frame) {
         egui::CentralPanel::default().show(ctx, |ui| {
-            self.projects.iter().for_each(|project| {
+            self.projects.iter_mut().for_each(|project| {
                 project.show(ui);
             });
 
@@ -73,16 +73,17 @@ impl eframe::App for ProjectPlanner {
                     self.end_date_selected,
                     self.project_name_selected.clone(),
                 ) {
-                    None => {
-                        ui.colored_label(
-                            Color32::LIGHT_RED,
-                            "Start date needs to precede end date, and project name needs to exist",
-                        );
-                    }
-                    Some(project) => {
+                    Ok(project) => {
                         if ui.button("Add project").clicked() {
                             self.projects.push(project);
                         }
+                    }
+                    Err(validity_error) => {
+                        let error = validity_error.get_text();
+                        ui.colored_label(
+                            Color32::LIGHT_RED,
+                            error,
+                        );
                     }
                 }
             });
