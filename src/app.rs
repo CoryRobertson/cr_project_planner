@@ -42,6 +42,9 @@ impl Default for ProjectPlanner {
 
 impl eframe::App for ProjectPlanner {
     fn update(&mut self, ctx: &Context, _frame: &mut Frame) {
+
+        // TODO: implement a floating panel that lets you edit a task when an edit task button is clicked
+
         egui::CentralPanel::default().show(ctx, |ui| {
             self.projects.iter_mut().for_each(|project| {
                 project.show(ui);
