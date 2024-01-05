@@ -1,0 +1,20 @@
+[package]
+name = "cr_project_planner"
+version = "0.1.0"
+edition = "2021"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+eframe = { version = "0.24.1", features = ["serde","persistence","glow"]}
+egui = "0.24.1"
+egui_extras = { version = "0.24.2", features = ["datepicker", "all_loaders","document-features","chrono"] }
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+env_logger = "0.10"
+chrono = { version = "0.4.31", features = ["serde"] }
+chrono-tz = { version = "0.8.5", features = ["serde"] }
+
+[profile.release]
+opt-level = 3
+lto = true
