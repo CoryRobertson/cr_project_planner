@@ -104,6 +104,7 @@ fn update_program() -> JoinHandle<Result<UpdateStatus, Error>> {
         match self_update::backends::github::UpdateBuilder::new()
             .repo_owner("CoryRobertson")
             .repo_name("cr_project_planner")
+            .bin_name("cr_project_planner")
             .show_download_progress(true)
             .no_confirm(true)
             .current_version(cargo_crate_version!())
@@ -111,14 +112,17 @@ fn update_program() -> JoinHandle<Result<UpdateStatus, Error>> {
             Ok(updater) => {
                 match updater.update_extended() {
                     Ok(status) => {
+                        println!("aaa");
                         Ok(status)
                     }
                     Err(err) => {
+                        println!("{}", err);
                         Err(err)
                     }
                 }
             }
             Err(err) => {
+                println!("{}", err);
                 Err(err)
             }
         }
@@ -132,7 +136,8 @@ impl eframe::App for ProjectPlanner {
 
         if self.first_run {
             self.first_run = false;
-            if self.last_open.signed_duration_since(Local::now()).num_hours() > 1 {
+            let last_open = Local::now().signed_duration_since(self.last_open).num_hours();
+            if last_open > 1 {
                 match get_release_list() {
                     Ok(list) => {
                         if let Some(release) = list.first() {
@@ -354,13 +359,15 @@ impl eframe::App for ProjectPlanner {
                                 AutoUpdateStatus::UpToDate => {
                                     ui.label("You were already on the latest version, whoops!");
                                 }
-                                AutoUpdateStatus::Updated(_) => {
+                                AutoUpdateStatus::Updated(version) => {
                                     ui.label("Update finished");
+                                    self.auto_update_seen_version = Some(version.to_string());
                                     ui.label("Simply close and re-open the program to complete the update.");
                                 }
                             }
                             if ui.button("Close this window").clicked() {
                                 self.auto_update_status = None;
+
                             }
                         }
 
