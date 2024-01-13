@@ -49,6 +49,9 @@ pub struct ProjectPlanner {
 
     #[serde(skip)]
     auto_update_status: Option<AutoUpdateStatus>,
+
+    #[serde(skip)]
+    showing_about_page: bool,
 }
 
 impl ProjectPlanner {
@@ -81,6 +84,7 @@ impl Default for ProjectPlanner {
             auto_update_seen_version: None,
             update_thread: None,
             auto_update_status: None,
+            showing_about_page: false,
         }
     }
 }
@@ -185,12 +189,20 @@ impl eframe::App for ProjectPlanner {
                 .retain(|project| project.marked_for_deletion.not());
 
             ui.with_layout(Layout::bottom_up(egui::Align::BOTTOM), |ui| {
-                if ui.button("Save & quit").clicked() {
-                    if let Some(storage) = _frame.storage_mut() {
-                        self.save(storage);
-                        ctx.send_viewport_cmd(ViewportCommand::Close);
+                ui.horizontal(|ui| {
+                    if ui.button("Save & quit").clicked() {
+                        if let Some(storage) = _frame.storage_mut() {
+                            self.save(storage);
+                            ctx.send_viewport_cmd(ViewportCommand::Close);
+                        }
                     }
-                }
+                    if !self.showing_about_page {
+                        if ui.button("About").clicked() {
+                            self.showing_about_page = true;
+                        }
+                    }
+                });
+
             });
         });
 
@@ -357,6 +369,38 @@ impl eframe::App for ProjectPlanner {
             }
             
         }
+
+        if self.showing_about_page {
+            egui::Window::new("About").show(ctx, |ui| {
+                ui.heading("Project Planner");
+                ui.label("A project planning and todo list software.");
+                ui.separator();
+                ui.label("Authors: Cory Robertson");
+                ui.label("License: GPL-3.0");
+                ui.horizontal(|ui| {
+                    ui.label("Github repository:");
+                    ui.hyperlink("https://github.com/CoryRobertson/cr_project_planner");
+                });
+                ui.separator();
+                ui.label(format!("Cargo crate version: {}", cargo_crate_version!()));
+                ui.separator();
+                ui.label(format!("Last open date: {}", self.last_open));
+                ui.label(format!(
+                    "Auto update seen version: {}",
+                    self.auto_update_seen_version.clone().unwrap_or_default()
+                ));
+                ui.label(format!(
+                    "Auto update status: {}",
+                    self.auto_update_status.as_ref().map(|status| status.to_text()).unwrap_or("Not checked".to_string())
+                ));
+
+                ui.separator();
+
+                if ui.button("Close").clicked() {
+                    self.showing_about_page = false;
+                }
+            });
+        }
     }
 
     fn save(&mut self, storage: &mut dyn Storage) {
@@ -372,4 +416,19 @@ enum AutoUpdateStatus {
     Error,
     UpToDate,
     Updated(String),
+}
+impl AutoUpdateStatus {
+    pub fn to_text(&self) -> String {
+        match self {
+            AutoUpdateStatus::Error => {
+                "Error".to_string()
+            }
+            AutoUpdateStatus::UpToDate => {
+                "Up to date".to_string()
+            }
+            AutoUpdateStatus::Updated(version) => {
+                version.to_string()
+            }
+        }
+    }
 }
